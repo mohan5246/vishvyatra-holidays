@@ -89,3 +89,11 @@ Automated browser test: 44 checks, all passing. They cover the popup (open once 
 - **Notification email**: off by default. Set `notify_email` so the team is alerted to new enquiries; otherwise check WP Admin → Enquiries.
 - **WhatsApp**: needs the official WhatsApp Business number, Cloud API credentials and an approved message template before the adapter is implemented.
 - **Privacy**: enquiries contain personal data. Agree how long they are kept and add a line to the privacy policy.
+
+## Try it on WordPress Playground
+
+`blueprint.json` builds a disposable test site in your browser with [WordPress Playground](https://playground.wordpress.net/). It uses placeholder pages at the live site's URLs, the Twenty Twenty-One theme, and this plugin installed from GitHub.
+
+    https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/mohan5246/vishvyatra-holidays/main/blueprint.json
+
+This needs the repository to be **public**, because Playground can't read private repos. Everything runs in the visitor's own browser: enquiries are saved only there and disappear when the tab is closed. This does not test the real Divi theme; use a staging copy of the live site for that.
