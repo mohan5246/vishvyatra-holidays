@@ -1,4 +1,5 @@
 <?php
+defined( 'ABSPATH' ) || exit; // Only via `wp eval-file`.
 /**
  * Run with: wp eval-file tools/export_plugin_output.php > plugin-output.json
  * Exports the plugin's front-end config and rendered blocks so the static
