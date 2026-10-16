@@ -95,7 +95,9 @@
 			var trigger = e.target.closest('[data-vy-open-services]');
 			if (trigger) { e.preventDefault(); open(); }
 		});
-		if (cfg.isFrontPage && popupCfg.enabled && !VY.storage.get(KEY)) {
+		// ?show_popup=1 always shows it (handy for testing and for links in ads/emails).
+		var forced = /[?&]show_popup=1\b/.test(window.location.search);
+		if (cfg.isFrontPage && popupCfg.enabled && (forced || !VY.storage.get(KEY))) {
 			setTimeout(function () {
 				// Don't interrupt a visitor who has already opened another dialog / the chatbot.
 				if (!document.documentElement.classList.contains('vy-scroll-lock') && !VY.chatOpen) open();
