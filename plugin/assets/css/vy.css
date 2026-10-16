@@ -234,6 +234,16 @@ html body .vy-side-tab { top: auto; bottom: 150px; transform: rotate(180deg); }
 @media (max-width: 700px) {
 	#vy-chatbot-root { bottom: 70px; }
 	.vy-chat-root--open#vy-chatbot-root { bottom: 8px; }
-	html body .vy-side-tab { bottom: 140px; }
+	html body .vy-side-tab { bottom: 190px; } /* above the theme's scroll-to-top arrow */
 	.vy-enquiry { padding-bottom: 140px; }
 }
+
+/* ---------- page / package context ---------- */
+.vy-form__context { margin: 0 0 8px; padding: 10px 14px; background: #fff; border-left: 4px solid var(--vy-teal); border-radius: 4px; color: var(--vy-navy); }
+.vy-form__context span { color: var(--vy-muted); }
+.vy-context { padding-top: 24px; }
+#left-area .vy-context .vy-container { width: 100%; max-width: none; } /* posts have a sidebar column */
+.vy-sidebar-cta { background: var(--vy-bg-soft); border-top: 4px solid var(--vy-red); border-radius: var(--vy-radius); padding: 20px; font-family: var(--vy-font); }
+.vy-sidebar-cta p { margin: 0 0 12px; padding: 0; line-height: 1.55; }
+.vy-sidebar-cta__title { font-size: 18px; font-weight: 700; color: var(--vy-navy); }
+.vy-sidebar-cta .vy-btn { width: 100%; }

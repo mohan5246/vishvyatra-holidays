@@ -53,6 +53,11 @@
 		return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v.slice(0, 10);
 	}
 
+	function parseJSON(s) {
+		if (!s) return null;
+		try { return JSON.parse(s); } catch (e) { return null; }
+	}
+
 	// ---------- form controller ----------
 	function EnquiryForm(mount) {
 		this.mount = mount;
@@ -62,6 +67,9 @@
 		this.formKey = mount.getAttribute('data-vy-form');
 		this.schema = cfg.forms[this.formKey];
 		this.ctx = { tourType: this.service.tour_type };
+		// Values worked out from the page (e.g. a package's destination and days).
+		this.prefill = parseJSON(mount.getAttribute('data-vy-prefill')) || {};
+		this.context = parseJSON(mount.getAttribute('data-vy-context'));
 		this.touched = {};
 		this.busy = false;
 		this.render();
@@ -78,6 +86,10 @@
 		html += '<div class="vy-form__summary" role="alert" tabindex="-1" hidden></div>';
 		if (this.service.tour_type) {
 			html += '<p class="vy-form__type">Tour type: <strong>' + (this.service.tour_type === 'international' ? 'International' : 'Domestic') + '</strong></p>';
+		}
+		if (this.context && this.context.title) {
+			html += '<p class="vy-form__context">' + (this.context.kind === 'package' ? 'Package' : 'Enquiring from') + ': <strong>' + VY.esc(this.context.title) + '</strong>' +
+				(this.context.details ? ' <span>· ' + VY.esc(this.context.details) + '</span>' : '') + '</p>';
 		}
 		html += '<p class="vy-form__legend"><span class="vy-req" aria-hidden="true">*</span> Required fields</p>';
 		html += '<div class="vy-form__grid">';
@@ -102,7 +114,7 @@
 		var help = f.help ? '<span class="vy-help" id="' + id + '-help">' + VY.esc(f.help) + '</span>' : '';
 		var describedBy = (f.help ? id + '-help ' : '') + id + '-err';
 		var common = ' id="' + id + '" name="' + f.name + '" aria-describedby="' + describedBy + '"' + (req ? ' required aria-required="true"' : '');
-		var def = f['default'] != null ? f['default'] : '';
+		var def = this.prefill[f.name] != null ? this.prefill[f.name] : (f['default'] != null ? f['default'] : '');
 		var control = '';
 		var other = '';
 
@@ -114,7 +126,7 @@
 		if (f.type === 'select') {
 			var opts = fieldOptions(f, this.ctx);
 			control = '<select' + common + '><option value="">Select…</option>' + optionTags(opts, def) +
-				(f.other ? '<option value="' + OTHER + '">Other</option>' : '') + '</select>';
+				(f.other ? '<option value="' + OTHER + '"' + (def === OTHER ? ' selected' : '') + '>Other</option>' : '') + '</select>';
 		} else if (f.type === 'radio') {
 			var self = this;
 			var ropts = fieldOptions(f, this.ctx).slice();
@@ -153,7 +165,7 @@
 		var id = this.id(f.name + '_other');
 		return '<div class="vy-field" data-field="' + f.name + '_other" data-other-of="' + f.name + '" hidden>' +
 			'<label class="vy-label" for="' + id + '">Please specify <span class="vy-req" aria-hidden="true">*</span></label>' +
-			'<input type="text" id="' + id + '" name="' + f.name + '_other" maxlength="100" aria-describedby="' + id + '-err" aria-required="true">' +
+			'<input type="text" id="' + id + '" name="' + f.name + '_other" maxlength="100" aria-describedby="' + id + '-err" aria-required="true" value="' + VY.esc(this.prefill[f.name + '_other'] || '') + '">' +
 			'<p class="vy-error" id="' + id + '-err"></p></div>';
 	};
 
@@ -386,6 +398,7 @@
 			fields: result.values,
 			source_page: window.location.href.split('#')[0],
 			idempotency_key: this.idempotencyKey,
+			context: this.context || undefined,
 			website: this.form.elements.website.value
 		};
 
