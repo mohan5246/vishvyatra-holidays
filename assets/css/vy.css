@@ -39,7 +39,7 @@
 .vy-card--note { border-top-color: var(--vy-teal); background: var(--vy-bg-soft); }
 .vy-card--price { border-top-color: var(--vy-red); }
 .vy-card__title { font-size: 19px; color: var(--vy-navy); margin: 0 0 12px; padding: 0; font-weight: 700; }
-.vy-list { margin: 0; padding: 0 0 0 1.1em; line-height: 1.65; }
+.vy-list { margin: 0; padding: 0 0 0 1.1em; line-height: 1.65; list-style: disc outside; }
 .vy-list li { margin: 0 0 6px; }
 .vy-list--check { list-style: none; padding-left: 0; }
 .vy-list--check li { position: relative; padding-left: 26px; }
@@ -221,3 +221,19 @@ html body .vy-chat__option:hover { background: var(--vy-navy) !important; color:
 html body .vy-chat__option--primary { background: var(--vy-red) !important; border-color: var(--vy-red) !important; color: #fff !important; }
 html body .vy-side-tab { background: var(--vy-red) !important; color: #fff !important; border: 0 !important; }
 html body .vy-side-tab:hover { background: var(--vy-red-hover) !important; }
+
+/* ---------- fit around the live theme's own floating elements ---------- */
+/* The theme adds bullets to every list inside page content. */
+.vy-service-grid, .vy-service-grid li, .vy-options, .vy-options li, .vy-list--check, .vy-list--check li { list-style: none !important; }
+.vy-service-grid li::marker, .vy-options li::marker, .vy-list--check li::marker { content: none; }
+/* Keep clear of the social-icon bar (right edge, upper middle). */
+html body .vy-side-tab { top: auto; bottom: 150px; transform: rotate(180deg); }
+/* Sit above the theme's WhatsApp / call buttons at the bottom corners. */
+#vy-chatbot-root { bottom: 76px; }
+.vy-chat-root--open#vy-chatbot-root { bottom: 20px; }
+@media (max-width: 700px) {
+	#vy-chatbot-root { bottom: 70px; }
+	.vy-chat-root--open#vy-chatbot-root { bottom: 8px; }
+	html body .vy-side-tab { bottom: 140px; }
+	.vy-enquiry { padding-bottom: 140px; }
+}

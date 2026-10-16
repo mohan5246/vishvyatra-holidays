@@ -97,3 +97,17 @@ Automated browser test: 44 checks, all passing. They cover the popup (open once 
     https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/mohan5246/vishvyatra-holidays/main/blueprint.json
 
 This needs the repository to be **public**, because Playground can't read private repos. Everything runs in the visitor's own browser: enquiries are saved only there and disappear when the tab is closed. This does not test the real Divi theme; use a staging copy of the live site for that.
+
+## Static test copy (exact replica of the live site + the new features)
+
+For review without WordPress, `tools/` builds a static copy of the live site's public pages with the plugin's features added. It is published on the `gh-pages` branch (GitHub Pages).
+
+    python3 tools/crawl_live_site.py live/ 200
+    wp eval-file tools/export_plugin_output.php > plugin-output.json     # on any WordPress with the plugin active
+    python3 tools/build_static_demo.py live/ plugin-output.json out/ /vishvyatra-holidays/
+
+How the test copy differs from the real site:
+- Forms run in demo mode: they are checked in the browser but nothing is sent.
+- The site's existing Contact Form 7 forms are switched off, so no test messages reach the business.
+- Pages are marked noindex and carry a "TEST COPY" label.
+- Images and theme files still load from the live website, apart from the theme's icon font, which is copied into the test copy because the live server blocks cross-domain fonts.

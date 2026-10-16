@@ -366,6 +366,20 @@
 
 		var self = this;
 		this.setBusy(true);
+
+		// Static demo copy (no WordPress server): validate only, send nothing.
+		if (!cfg.restUrl) {
+			var ref = 'DEMO-' + cfg.today.replace(/-/g, '').slice(2) + '-' + this.idempotencyKey.slice(0, 5).toUpperCase();
+			setTimeout(function () {
+				self.success({
+					status: 'prepared',
+					reference: ref,
+					message: 'Test copy: your enquiry passed all checks and was prepared, but it has NOT been sent to VishvYatra Holidays. On the live site it will be recorded for the team.'
+				});
+			}, 400);
+			return;
+		}
+
 		var body = {
 			service: this.serviceKey,
 			request_type: this.formKey === 'visa' ? 'special_price' : 'quote',
