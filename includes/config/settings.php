@@ -28,7 +28,31 @@ return array(
 	'popup'        => array(
 		'enabled'      => true,
 		'delay_ms'     => 600,        // Short delay so the page paints first.
+		// 'every_visit' = every time the homepage loads (client's choice);
+		// 'session'     = once per browsing session.
+		'frequency'    => 'every_visit',
 		'storage_key'  => 'vy_service_popup_seen',
+	),
+
+	/*
+	 * Smart Quote Bar: slides in under the header on every page that has an
+	 * enquiry form, worded for that page, and takes the visitor to the form
+	 * (with their mobile number already filled in if they type it in the bar).
+	 * {title} = page / package name, {service} = service name.
+	 */
+	'quote_bar'    => array(
+		'enabled'     => true,
+		'delay_ms'    => 900,
+		'button'      => 'Get my free quote',
+		'placeholder' => 'Your mobile number',
+		'subline'     => 'Takes about a minute · No payment needed',
+		'headlines'   => array(
+			'package' => 'Planning {title}?',
+			'tour'    => 'Exploring {title}?',
+			'visa'    => 'Visa assistance · Service amount {visa_amount}',
+			'service' => '{service}: tell us your plan, get a quote',
+			'other'   => 'Questions about {title}? Ask our travel experts',
+		),
 	),
 
 	// Chatbot launcher shown on every front-end page.

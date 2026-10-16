@@ -87,7 +87,7 @@ class VY_Frontend {
 
 		wp_enqueue_script( 'vy-core', VY_URL . 'assets/js/vy-core.js', array(), VY_VERSION, true );
 		wp_add_inline_script( 'vy-core', 'window.VY_CONFIG = ' . wp_json_encode( self::public_config() ) . ';', 'before' );
-		foreach ( array( 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot' ) as $handle ) {
+		foreach ( array( 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar' ) as $handle ) {
 			wp_enqueue_script( $handle, VY_URL . 'assets/js/' . $handle . '.js', array( 'vy-core' ), VY_VERSION, true );
 		}
 	}
@@ -127,6 +127,7 @@ class VY_Frontend {
 			'today'        => wp_date( 'Y-m-d' ),
 			'contact'      => VY_Config::setting( 'contact' ),
 			'popup'        => VY_Config::setting( 'popup' ),
+			'quoteBar'     => VY_Config::setting( 'quote_bar' ),
 			'chatbotEnabled' => (bool) VY_Config::setting( 'chatbot', 'enabled', true ),
 			'services'     => $services,
 			'forms'        => $forms,

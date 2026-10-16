@@ -29,7 +29,7 @@ const future = (d) => { const t = new Date(Date.now() + d * 864e5); return t.toI
   ok(await page.locator('a:has-text("Pay Now"), a:has-text("Gift Card")').count() === 0, 'no Pay Now / Gift Card links on homepage');
   await page.reload();
   await page.waitForTimeout(1200);
-  ok(await page.locator('.vy-modal').isHidden(), 'popup not shown again in same session');
+  ok(await page.locator('.vy-modal').isVisible(), 'popup shown again on every homepage visit (frequency=every_visit)'); await page.keyboard.press('Escape');
   await page.locator('.vy-side-tab').click();
   await dlg.waitFor({ state: 'visible' });
   ok(true, 'Get a Quote tab reopens popup');

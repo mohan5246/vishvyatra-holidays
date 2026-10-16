@@ -218,7 +218,7 @@ def inject(page, slug):
     scripts.append('<div class="vy-test-badge" role="note">TEST COPY - not the official website. Forms are not sent.</div>')
     scripts.append('<script>window.VY_CONFIG = ' + json.dumps(cfg) + ';'
                    '(function(d){window.VY_CONFIG.today=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})(new Date());</script>')
-    for js in ['vy-core', 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot']:
+    for js in ['vy-core', 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar']:
         scripts.append('<script src="' + BASE + 'plugin/assets/js/' + js + '.js"></script>')
     scripts.append(CF7_BLOCK)
     return page.replace('</body>', '\n'.join(scripts) + '\n</body>', 1)

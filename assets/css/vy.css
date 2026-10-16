@@ -247,3 +247,63 @@ html body .vy-side-tab { top: auto; bottom: 150px; transform: rotate(180deg); }
 .vy-sidebar-cta p { margin: 0 0 12px; padding: 0; line-height: 1.55; }
 .vy-sidebar-cta__title { font-size: 18px; font-weight: 700; color: var(--vy-navy); }
 .vy-sidebar-cta .vy-btn { width: 100%; }
+
+/* ---------- Smart Quote Bar ---------- */
+.vy-qbar { position: fixed; left: 0; right: 0; top: 0; z-index: 9985; padding: 8px 12px 0; pointer-events: none; font-family: var(--vy-font); transform: translateY(-120%); opacity: 0; transition: transform .35s cubic-bezier(.2, .8, .2, 1), opacity .25s; }
+.vy-qbar[hidden] { display: none; }
+.vy-qbar--in { transform: none; opacity: 1; }
+.vy-qbar__inner { pointer-events: auto; position: relative; max-width: 1080px; margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 16px; border-radius: 14px; background: linear-gradient(100deg, var(--vy-navy-dark) 0%, var(--vy-navy) 55%, #27507f 100%); color: #fff; box-shadow: 0 12px 30px rgba(0, 19, 70, .28); overflow: hidden; }
+.vy-qbar__inner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 12% 120%, rgba(126, 190, 197, .35), transparent 45%); pointer-events: none; }
+.vy-qbar__plane { position: relative; flex: 0 0 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255, 255, 255, .12); }
+.vy-qbar__plane-svg { width: 24px; height: 24px; color: #fff; }
+.vy-qbar__trail { position: absolute; right: 70%; top: 50%; width: 0; border-top: 2px dashed rgba(126, 190, 197, .9); }
+.vy-qbar--in .vy-qbar__plane-svg { animation: vy-fly-in .9s cubic-bezier(.2, .8, .2, 1) both, vy-float 3.2s ease-in-out .9s infinite; }
+.vy-qbar--in .vy-qbar__trail { animation: vy-trail .9s ease-out both; }
+@keyframes vy-fly-in { from { transform: translate(-60px, 14px) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes vy-trail { 0% { width: 0; opacity: 1; } 70% { width: 60px; opacity: 1; } 100% { width: 60px; opacity: 0; } }
+@keyframes vy-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.vy-qbar__text { position: relative; flex: 1; min-width: 0; z-index: 1; }
+.vy-qbar__title { margin: 0; padding: 0; font-size: 16px; line-height: 1.3; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vy-qbar__title strong { color: #fff; font-weight: 900; }
+.vy-qbar__meta { margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; line-height: 1.2; }
+.vy-chip { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; background: rgba(126, 190, 197, .25); border: 1px solid rgba(126, 190, 197, .6); color: #fff; font-weight: 700; }
+.vy-qbar__sub { color: rgba(255, 255, 255, .78); }
+.vy-qbar__form { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; margin: 0; padding: 4px; background: #fff; border-radius: 999px; }
+html body .vy-qbar__form input { width: 180px; min-height: 40px; margin: 0; padding: 6px 12px; border: 0 !important; background: transparent !important; color: var(--vy-text); font: 15px var(--vy-font); box-shadow: none !important; outline: none; }
+html body .vy-qbar__go { position: relative; overflow: hidden; min-height: 40px; padding: 0 18px; border: 0 !important; border-radius: 999px; background: var(--vy-red) !important; color: #fff !important; font: 700 15px/1 var(--vy-font); cursor: pointer; white-space: nowrap; }
+html body .vy-qbar__go:hover { background: var(--vy-red-hover) !important; }
+.vy-qbar__go::after { content: ''; position: absolute; top: 0; bottom: 0; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-20deg); animation: vy-shine 4.5s ease-in-out 1.2s infinite; }
+@keyframes vy-shine { 0%, 70% { left: -60%; } 100% { left: 130%; } }
+.vy-qbar__go-short { display: none; }
+html body .vy-qbar__close { position: relative; z-index: 1; flex: 0 0 34px; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0 !important; border-radius: 50%; background: transparent !important; color: rgba(255, 255, 255, .8) !important; cursor: pointer; }
+html body .vy-qbar__close:hover { background: rgba(255, 255, 255, .14) !important; color: #fff !important; }
+.vy-qbar__close svg { width: 18px; height: 18px; }
+.vy-qbar__go:focus-visible, .vy-qbar__close:focus-visible, .vy-qbar__form:focus-within { outline: 3px solid var(--vy-teal); outline-offset: 2px; }
+
+/* The form glows briefly when the visitor arrives from the bar / a button. */
+.vy-enquiry--glow { animation: vy-glow 1.8s ease-out 1; }
+@keyframes vy-glow { 0% { box-shadow: 0 0 0 0 rgba(210, 23, 15, .55); } 40% { box-shadow: 0 0 0 10px rgba(210, 23, 15, .18); } 100% { box-shadow: 0 0 0 0 rgba(210, 23, 15, 0); } }
+
+@media (max-width: 860px) {
+	html body .vy-qbar__form input { width: 140px; }
+	.vy-qbar__sub { display: none; }
+}
+@media (max-width: 640px) {
+	.vy-qbar { padding: 6px 8px 0; }
+	.vy-qbar__inner { gap: 10px; padding: 8px 6px 8px 10px; border-radius: 12px; }
+	.vy-qbar__plane { flex-basis: 34px; height: 34px; }
+	.vy-qbar__plane-svg { width: 19px; height: 19px; }
+	.vy-qbar__title { font-size: 14px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+	.vy-qbar__meta { flex-wrap: nowrap; overflow: hidden; }
+	.vy-chip { white-space: nowrap; font-size: 11px; padding: 2px 7px; }
+	.vy-qbar__form { padding: 0; background: transparent; }
+	html body .vy-qbar__form input { display: none; }
+	html body .vy-qbar__go { min-height: 38px; padding: 0 13px; font-size: 14px; }
+	.vy-qbar__go-full { display: none; }
+	.vy-qbar__go-short { display: inline; }
+	html body .vy-qbar__close { flex-basis: 28px; width: 28px; height: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.vy-qbar { transition: none; }
+	.vy-qbar--in .vy-qbar__plane-svg, .vy-qbar--in .vy-qbar__trail, .vy-qbar__go::after, .vy-enquiry--glow { animation: none; }
+}

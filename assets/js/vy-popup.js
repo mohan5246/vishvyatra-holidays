@@ -97,7 +97,8 @@
 		});
 		// ?show_popup=1 always shows it (handy for testing and for links in ads/emails).
 		var forced = /[?&]show_popup=1\b/.test(window.location.search);
-		if (cfg.isFrontPage && popupCfg.enabled && (forced || !VY.storage.get(KEY))) {
+		var everyVisit = popupCfg.frequency === 'every_visit';
+		if (cfg.isFrontPage && popupCfg.enabled && (forced || everyVisit || !VY.storage.get(KEY))) {
 			setTimeout(function () {
 				// Don't interrupt a visitor who has already opened another dialog / the chatbot.
 				if (!document.documentElement.classList.contains('vy-scroll-lock') && !VY.chatOpen) open();

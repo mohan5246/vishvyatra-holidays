@@ -460,13 +460,41 @@
 	// ---------- boot ----------
 	VY.forms = [];
 
-	VY.focusEnquiry = function () {
+	/**
+	 * Scrolls to the page's enquiry form, briefly highlights it and focuses
+	 * the first empty required field. opts.mobile pre-fills the mobile number
+	 * (from the Smart Quote Bar).
+	 */
+	VY.focusEnquiry = function (opts) {
+		opts = opts || {};
 		var mount = document.getElementById('vy-enquiry');
 		if (!mount) return false;
-		mount.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		var form = VY.forms[0];
-		if (form) setTimeout(function () { form.focusFirst(); }, 350);
+		if (form && form.form && opts.mobile && form.form.elements.mobile) {
+			form.form.elements.mobile.value = opts.mobile;
+			form.touched.mobile = true;
+			form.validateField('mobile', true);
+		}
+		var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		mount.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+		mount.classList.remove('vy-enquiry--glow');
+		void mount.offsetWidth; // restart the animation
+		mount.classList.add('vy-enquiry--glow');
+		if (form) setTimeout(function () { form.focusFirstEmpty(); }, reduce ? 0 : 450);
 		return true;
+	};
+
+	EnquiryForm.prototype.focusFirstEmpty = function () {
+		if (!this.form) return;
+		var vals = this.values();
+		var self = this;
+		var target = null;
+		this.schema.fields.some(function (f) {
+			if (f.type === 'hidden' || !f.required || !self.isVisible(f, vals) || vals[f.name]) return false;
+			target = self.form.querySelector('[name="' + f.name + '"]');
+			return !!target;
+		});
+		(target || this.form.querySelector('input:not([type="hidden"]), select, textarea')).focus({ preventScroll: true });
 	};
 
 	VY.ready(function () {
