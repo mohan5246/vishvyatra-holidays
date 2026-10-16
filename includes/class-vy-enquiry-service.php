@@ -87,6 +87,7 @@ class VY_Enquiry_Service {
 			array(
 				'request_type' => isset( $params['request_type'] ) ? sanitize_key( $params['request_type'] ) : 'quote',
 				'source_page'  => isset( $params['source_page'] ) ? esc_url_raw( $params['source_page'] ) : '',
+				'context'      => isset( $params['context'] ) && is_array( $params['context'] ) ? $params['context'] : array(),
 			)
 		);
 
@@ -168,6 +169,15 @@ class VY_Enquiry_Service {
 			$payload['service']['tour_type'] = $service['tour_type'];
 		}
 
+		// The package / page the visitor enquired from (informational).
+		if ( ! empty( $meta['context']['title'] ) ) {
+			$payload['context'] = array(
+				'kind'    => isset( $meta['context']['kind'] ) && 'package' === $meta['context']['kind'] ? 'package' : 'page',
+				'title'   => mb_substr( sanitize_text_field( (string) $meta['context']['title'] ), 0, 200 ),
+				'details' => isset( $meta['context']['details'] ) ? mb_substr( sanitize_text_field( (string) $meta['context']['details'] ), 0, 100 ) : '',
+			);
+		}
+
 		if ( 'visa' === $service['form'] ) {
 			$pricing            = VY_Config::get( 'visa' )['pricing'];
 			$country            = isset( $values['country'] ) ? $values['country'] : '';
@@ -187,6 +197,10 @@ class VY_Enquiry_Service {
 		$lines   = array();
 		$lines[] = 'Reference: ' . $payload['reference'];
 		$lines[] = 'Service: ' . $payload['service']['label'] . ( 'special_price' === $payload['request_type'] ? ' (special price request)' : '' );
+		if ( ! empty( $payload['context'] ) ) {
+			$lines[] = ( 'package' === $payload['context']['kind'] ? 'Package: ' : 'Enquired from page: ' ) . $payload['context']['title']
+				. ( $payload['context']['details'] ? ' (' . $payload['context']['details'] . ')' : '' );
+		}
 		$lines[] = 'Name: ' . $payload['customer']['name'];
 		$lines[] = 'Mobile: ' . $payload['customer']['mobile'];
 		if ( $payload['customer']['email'] ) {

@@ -184,7 +184,7 @@ return array(
 		'fields' => array_merge(
 			$vy_contact_fields( 'Name' ),
 			array(
-				array( 'name' => 'category', 'type' => 'select', 'label' => 'Service / subject', 'required' => true, 'options' => array( 'MICE', 'Trade fair', 'Destination wedding', 'Cruise packages', 'Honeymoon packages', 'Educational tours', 'Forex', 'Travel insurance', 'Security service', 'Overseas education', 'General enquiry' ), 'other' => true ),
+				array( 'name' => 'category', 'type' => 'select', 'label' => 'Service / subject', 'required' => true, 'options' => array( 'MICE', 'Trade fair', 'Destination wedding', 'Cruise packages', 'Honeymoon packages', 'Family tours', 'Adventure tours', 'Educational tours', 'Forex', 'Travel insurance', 'Security service', 'Overseas education', 'General enquiry' ), 'other' => true ),
 				array( 'name' => 'contact_method', 'type' => 'radio', 'label' => 'Preferred contact method', 'required' => true, 'options' => array( 'Phone call', 'WhatsApp', 'Email' ), 'default' => 'Phone call' ),
 				array( 'name' => 'description', 'type' => 'textarea', 'label' => 'Describe your requirement', 'required' => true, 'maxlength' => 3000, 'width' => 'full' ),
 			)

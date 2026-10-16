@@ -18,4 +18,22 @@ foreach ( VY_Config::services() as $key => $service ) {
 		'new'      => VY_Frontend::render_service_block( $key, true ),
 	);
 }
+// Per-page enquiry sections for the static copy: VY_PAGES points to the JSON
+// written by `build_static_demo.py extract` (slug, type, title, categories, text).
+$pages_file = getenv( 'VY_PAGES' );
+if ( $pages_file && is_readable( $pages_file ) ) {
+	$out['pages'] = array();
+	foreach ( json_decode( file_get_contents( $pages_file ), true ) as $page ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$context = VY_Context::resolve( $page );
+		if ( ! $context ) {
+			continue;
+		}
+		$out['pages'][ $page['slug'] ] = array(
+			'service' => $context['service'],
+			'block'   => ! empty( $context['service_page'] ) ? null : VY_Frontend::render_context_block( $context ),
+			'cta'     => VY_Frontend::render_sidebar_cta( $context ),
+		);
+	}
+}
+
 echo wp_json_encode( $out );

@@ -36,24 +36,29 @@ class VY_Pages {
 	}
 
 	/**
-	 * Adds the service information + enquiry form under the page's own
-	 * content, unless the page already places the shortcode itself.
+	 * Adds the right enquiry section under the page's own content: the
+	 * service information + form on service pages, and a prefilled form on
+	 * package posts and every other page (see VY_Context). Skipped when the
+	 * page already places one of the shortcodes itself.
 	 */
 	public static function append_service_block( $content ) {
 		static $done = array();
 
-		if ( ! VY_Config::get( 'settings' )['auto_insert'] || is_admin() || ! is_singular( 'page' ) || ! in_the_loop() || ! is_main_query() ) {
+		if ( ! VY_Config::get( 'settings' )['auto_insert'] || is_admin() || ! is_singular( array( 'page', 'post' ) ) || ! in_the_loop() || ! is_main_query() ) {
 			return $content;
 		}
 		$post = get_post();
-		$key  = VY_Config::service_for_post( $post );
-		if ( ! $key || isset( $done[ $post->ID ] ) ) {
+		if ( isset( $done[ $post->ID ] ) || has_shortcode( $post->post_content, 'vy_service_page' ) || has_shortcode( $post->post_content, 'vy_enquiry_form' ) ) {
 			return $content;
 		}
-		if ( has_shortcode( $post->post_content, 'vy_service_page' ) || has_shortcode( $post->post_content, 'vy_enquiry_form' ) ) {
+		$context = VY_Context::current();
+		if ( ! $context ) {
 			return $content;
 		}
 		$done[ $post->ID ] = true;
-		return $content . VY_Frontend::render_service_block( $key, false );
+		if ( ! empty( $context['service_page'] ) ) {
+			return $content . VY_Frontend::render_service_block( $context['service'], false );
+		}
+		return $content . VY_Frontend::render_context_block( $context );
 	}
 }

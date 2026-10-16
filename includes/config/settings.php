@@ -85,11 +85,22 @@ return array(
 	/*
 	 * The general "Enquiry Now" side slider (WP Contact Slider) and the
 	 * "Contact Now" popup (Easy Contact Popup) are hidden on these pages.
-	 * 'front_page' = homepage only; 'all' = every page. The Contact Us
-	 * page form is never touched.
+	 * 'front_page' = homepage only; 'all' = every page (default, since every
+	 * page now has its own enquiry section).
 	 */
 	'general_enquiry' => array(
-		'hide_on' => 'front_page',
+		'hide_on' => 'all',
+	),
+
+	/*
+	 * Every page except the homepage now gets its own enquiry section (see
+	 * page-context.php), so the theme's Contact Form 7 enquiry forms are
+	 * replaced on those pages: the sidebar "Contact Enquiry" widget becomes
+	 * a short card that jumps to our form. CF7 and its saved forms are not
+	 * changed; set to false to show them again.
+	 */
+	'contact_form_7' => array(
+		'replace' => true,
 	),
 
 	// Insert the enquiry block automatically at the end of each service page.

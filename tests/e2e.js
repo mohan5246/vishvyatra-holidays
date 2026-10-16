@@ -39,7 +39,7 @@ const future = (d) => { const t = new Date(Date.now() + d * 864e5); return t.toI
 
   // 2. Visa page
   ok((await page.locator('.vy-price').innerText()).includes('Visa Service Amount: ₹5,000'), 'visa amount ₹5,000 shown');
-  ok(await page.locator('#wpcs_tab_368').isVisible(), 'general slider still present on non-home pages (hide_on=front_page)');
+  ok(await page.locator('#wpcs_tab_368').isHidden(), 'old general slider hidden on service pages too (hide_on=all)');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('[data-vy-download-checklist]').click()]);
   await dl.saveAs(OUT + '/' + dl.suggestedFilename());
   ok(dl.suggestedFilename().endsWith('.xlsx'), 'checklist downloads as .xlsx: ' + dl.suggestedFilename());

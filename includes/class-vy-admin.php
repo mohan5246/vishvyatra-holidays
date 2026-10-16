@@ -57,6 +57,7 @@ class VY_Admin {
 		$rows = array(
 			'Reference' => $payload['reference'],
 			'Service'   => $payload['service']['label'] . ( 'special_price' === $payload['request_type'] ? ' (special price request)' : '' ),
+			'Package / page' => ! empty( $payload['context'] ) ? $payload['context']['title'] . ( $payload['context']['details'] ? ' (' . $payload['context']['details'] . ')' : '' ) : '',
 			'Name'      => $payload['customer']['name'],
 			'Mobile'    => $payload['customer']['mobile'],
 			'Email'     => $payload['customer']['email'],

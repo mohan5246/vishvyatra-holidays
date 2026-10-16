@@ -10,6 +10,12 @@ defined( 'ABSPATH' ) || exit;
 
 class VY_Frontend {
 
+	/** @var bool Set once an enquiry form has been printed on this request. */
+	private static $form_rendered = false;
+
+	/** @var bool True while WordPress renders a widget area (sidebar). */
+	private static $in_sidebar = false;
+
 	public static function init() {
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ) );
 		add_filter( 'body_class', array( __CLASS__, 'body_class' ) );
@@ -19,6 +25,61 @@ class VY_Frontend {
 		add_shortcode( 'vy_service_page', array( __CLASS__, 'shortcode_service_page' ) );
 		add_shortcode( 'vy_enquiry_form', array( __CLASS__, 'shortcode_enquiry_form' ) );
 		add_shortcode( 'vy_service_grid', array( __CLASS__, 'shortcode_service_grid' ) );
+
+		if ( VY_Config::setting( 'contact_form_7', 'replace', true ) ) {
+			add_filter( 'widget_display_callback', array( __CLASS__, 'replace_cf7_widget' ), 10, 3 );
+			add_filter( 'do_shortcode_tag', array( __CLASS__, 'replace_cf7' ), 10, 2 );
+			add_action( 'dynamic_sidebar_before', static function () { self::$in_sidebar = true; } );
+			add_action( 'dynamic_sidebar_after', static function () { self::$in_sidebar = false; } );
+		}
+	}
+
+	/**
+	 * Replaces the theme's Contact Form 7 enquiry forms on pages that get
+	 * one of our enquiry sections: in the sidebar with a short card that
+	 * jumps to our form, elsewhere with nothing (our form is below the page
+	 * content). Pages without our section (e.g. the homepage) keep CF7 output,
+	 * and CF7 itself, its forms and submissions are not modified.
+	 */
+	public static function replace_cf7( $output, $tag ) {
+		if ( ! in_array( $tag, array( 'contact-form-7', 'contact-form' ), true ) || is_admin() || wp_doing_ajax() ) {
+			return $output;
+		}
+		$context = VY_Context::current();
+		if ( ! $context || ! VY_Config::get( 'settings' )['auto_insert'] ) {
+			return $output;
+		}
+		return self::$in_sidebar ? self::render_sidebar_cta( $context ) : '';
+	}
+
+	/**
+	 * A sidebar widget whose content is a Contact Form 7 form (the theme's
+	 * "Contact Enquiry" widget) is shown as our card instead, title included.
+	 */
+	public static function replace_cf7_widget( $instance, $widget, $args ) {
+		if ( ! is_array( $instance ) || empty( $instance['text'] ) || ! preg_match( '/\[contact-form(-7)?\s/', (string) $instance['text'] ) ) {
+			return $instance;
+		}
+		$context = VY_Context::current();
+		if ( ! $context || ! VY_Config::get( 'settings' )['auto_insert'] ) {
+			return $instance;
+		}
+		echo $args['before_widget'] . self::render_sidebar_cta( $context ) . $args['after_widget']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		return false;
+	}
+
+	public static function render_sidebar_cta( $context ) {
+		$service = VY_Config::service( $context['service'] );
+		$package = ! empty( $context['context']['kind'] ) && 'package' === $context['context']['kind'];
+		$title   = $package ? 'Enquire about this package' : 'Request a quote';
+		$text    = $package
+			? 'Get a custom quote for ' . $context['context']['title'] . '. Destination and duration are already filled in for you.'
+			: 'Tell us what you need and our team will get back to you.';
+		if ( ! empty( $context['service_page'] ) ) {
+			$text = 'Share your requirements for ' . $service['label'] . ' and our team will send you a quote.';
+		}
+		return '<div class="vy-sidebar-cta"><p class="vy-sidebar-cta__title">' . esc_html( $title ) . '</p><p>' . esc_html( $text ) . '</p>'
+			. '<a class="vy-btn" href="#vy-enquiry">' . esc_html__( 'Request a Quote', 'vishvyatra' ) . '</a></div>';
 	}
 
 	public static function enqueue() {
@@ -62,7 +123,7 @@ class VY_Frontend {
 			'restUrl'      => esc_url_raw( rest_url( VY_Enquiry_Service::ROUTE_NS . '/enquiries' ) ),
 			'homeUrl'      => home_url( '/' ),
 			'isFrontPage'  => is_front_page(),
-			'currentService' => is_singular( 'page' ) ? VY_Config::service_for_post( get_post() ) : null,
+			'currentService' => ( $ctx = VY_Context::current() ) ? $ctx['service'] : null, // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition
 			'today'        => wp_date( 'Y-m-d' ),
 			'contact'      => VY_Config::setting( 'contact' ),
 			'popup'        => VY_Config::setting( 'popup' ),
@@ -90,7 +151,10 @@ class VY_Frontend {
 
 	public static function footer_mounts() {
 		echo '<div id="vy-popup-root"></div><div id="vy-chatbot-root"></div>';
-		if ( is_front_page() ) {
+		// Jumps to this page's form when it has one, otherwise opens the service popup.
+		if ( self::$form_rendered ) {
+			echo '<a class="vy-side-tab" href="#vy-enquiry">' . esc_html__( 'Get a Quote', 'vishvyatra' ) . '</a>';
+		} else {
 			echo '<button type="button" class="vy-side-tab" data-vy-open-services>' . esc_html__( 'Get a Quote', 'vishvyatra' ) . '</button>';
 		}
 	}
@@ -230,21 +294,41 @@ class VY_Frontend {
 		<?php
 	}
 
-	private static function render_form_mount( $key ) {
+	private static function render_form_mount( $key, array $prefill = array(), $context = null ) {
 		$service = VY_Config::service( $key );
 		$forms   = VY_Config::get( 'forms' );
 		$form    = $forms[ $service['form'] ];
 		$contact = VY_Config::setting( 'contact' );
 
+		$title = $form['title'];
+		$intro = $form['intro'];
+		if ( $context && 'package' === $context['kind'] ) {
+			$title = 'Enquire about this package';
+			$intro = 'We have filled in the destination and number of days from this package - change anything you like. ' . $form['intro'];
+		}
+		self::$form_rendered = true;
+
 		return sprintf(
-			'<div class="vy-enquiry" id="vy-enquiry" data-vy-form="%1$s" data-vy-service="%2$s" tabindex="-1">'
+			'<div class="vy-enquiry" id="vy-enquiry" data-vy-form="%1$s" data-vy-service="%2$s" data-vy-prefill="%6$s" data-vy-context="%7$s" tabindex="-1">'
 			. '<h2 class="vy-heading">%3$s</h2><p class="vy-lead">%4$s</p>'
 			. '<div class="vy-enquiry__body"><noscript><p>%5$s</p></noscript></div></div>',
 			esc_attr( $service['form'] ),
 			esc_attr( $key ),
-			esc_html( $form['title'] ),
-			esc_html( $form['intro'] ),
-			esc_html( sprintf( 'Please enable JavaScript to use this form, or call us on %s / email %s.', $contact['phone_display'], $contact['email'] ) )
+			esc_html( $title ),
+			esc_html( $intro ),
+			esc_html( sprintf( 'Please enable JavaScript to use this form, or call us on %s / email %s.', $contact['phone_display'], $contact['email'] ) ),
+			esc_attr( wp_json_encode( (object) $prefill ) ),
+			esc_attr( $context ? wp_json_encode( $context ) : '' )
 		);
+	}
+
+	/**
+	 * Enquiry section for package posts and other non-service pages: the
+	 * matching form, prefilled from the page (see VY_Context).
+	 */
+	public static function render_context_block( array $context ) {
+		return '<section class="vy-section vy-service vy-context" data-vy-service-block="' . esc_attr( $context['service'] ) . '"><div class="vy-container">'
+			. self::render_form_mount( $context['service'], $context['prefill'], $context['context'] )
+			. '</div></section>';
 	}
 }

@@ -21,6 +21,7 @@ define( 'VY_URL', plugin_dir_url( __FILE__ ) );
 
 require_once VY_DIR . 'includes/class-vy-config.php';
 require_once VY_DIR . 'includes/class-vy-validator.php';
+require_once VY_DIR . 'includes/class-vy-context.php';
 require_once VY_DIR . 'includes/adapters/interface-vy-enquiry-adapter.php';
 require_once VY_DIR . 'includes/adapters/class-vy-local-adapter.php';
 require_once VY_DIR . 'includes/adapters/class-vy-mock-adapter.php';
