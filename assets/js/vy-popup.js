@@ -36,6 +36,7 @@
 			'<h2 class="vy-modal__title" id="vy-popup-title">What are you looking for today?</h2>' +
 			'<p class="vy-modal__desc" id="vy-popup-desc">Choose a service to see details and request a quote.</p>' +
 			'<ul class="vy-options">' + items + '</ul>' +
+			(cfg.engage && cfg.engage.finder && cfg.engage.finder.enabled ? '<button type="button" class="vy-finder-strip" data-vy-open-finder><span aria-hidden="true">✨</span> Not sure where to go? <strong>Find my perfect holiday in 4 taps →</strong></button>' : '') +
 			'<div class="vy-modal__footer">' +
 			'<a class="vy-link" href="' + VY.esc(cfg.homeUrl + 'services/') + '">Explore all services</a>' +
 			'<button type="button" class="vy-btn vy-btn--ghost" data-vy-close>Continue browsing</button>' +

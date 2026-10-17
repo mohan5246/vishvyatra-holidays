@@ -45,8 +45,15 @@ def text_of(fragment):
 
 
 def extract(live, dest):
-    """Page facts for VY_Context::resolve(), read from the saved HTML."""
+    """Page facts for VY_Context::resolve() / VY_Catalog::entry(), read from the saved HTML."""
     out = []
+    # Package thumbnails (400x250) from the listing cards on any page.
+    thumbs = {}
+    for root, _, files in os.walk(live):
+        if 'index.html' in files:
+            html = open(os.path.join(root, 'index.html'), encoding='utf-8').read()
+            for slug_, src in re.findall(r'<a href="https://vishvyatraholidays\.com/([^"/]+)/" class="entry-featured-image-url"><img[^>]*?src="([^"]+)"', html):
+                thumbs.setdefault(slug_, src)
     for root, _, files in os.walk(live):
         if 'index.html' not in files:
             continue
@@ -59,12 +66,16 @@ def extract(live, dest):
         title = re.search(r'<title>(.*?)</title>', page, re.S)
         title = htmllib.unescape(title.group(1)).split(' | ')[0].strip() if title else slug
         main = page[page.find('id="main-content"'):page.find('<footer')]
+        featured = re.search(r'et_post_meta_wrapper">.*?<img[^>]*?src="([^"]+)"', main, re.S)
+        image = thumbs.get(slug) or (featured.group(1) if featured else '')
         out.append({
             'slug': slug,
             'type': 'front' if slug == '' else ('post' if is_post else 'page'),
             'title': title,
             'categories': re.findall(r'\bcategory-([a-z0-9-]+)', article.group(1)) if (article and is_post) else [],
             'text': text_of(main)[:20000],
+            'image': image,
+            'url': 'BASE/' + slug + '/',
         })
     json.dump(out, open(dest, 'w', encoding='utf-8'))
     print('extracted', len(out), 'pages ->', dest)
@@ -179,6 +190,8 @@ def replace_cf7(page, cta):
 def page_config(slug):
     cfg = json.loads(localize(json.dumps(data['config'])))
     cfg['restUrl'] = None  # demo mode: nothing is sent anywhere
+    cfg['engage']['catalogUrl'] = BASE + 'plugin/packages.json'
+    cfg['engage']['imageBase'] = LIVE_HOST + '/wp-content/uploads/'
     if cfg.get('quiz', {}).get('enabled'):
         cfg['quiz']['claimUrl'] = None  # demo reward code, made in the browser
         cfg['quiz']['imageBase'] = LIVE_HOST + '/wp-content/uploads/'  # the site's own photos
@@ -221,7 +234,7 @@ def inject(page, slug):
     scripts.append('<div class="vy-test-badge" role="note">TEST COPY - not the official website. Forms are not sent.</div>')
     scripts.append('<script>window.VY_CONFIG = ' + json.dumps(cfg) + ';'
                    '(function(d){window.VY_CONFIG.today=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})(new Date());</script>')
-    for js in ['vy-core', 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar', 'vy-quiz']:
+    for js in ['vy-core', 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar', 'vy-quiz', 'vy-engage']:
         scripts.append('<script src="' + BASE + 'plugin/assets/js/' + js + '.js"></script>')
     scripts.append(CF7_BLOCK)
     return page.replace('</body>', '\n'.join(scripts) + '\n</body>', 1)
@@ -254,6 +267,8 @@ for slug in sorted(pages):
     page = add_body_class(page, 'vy-hide-general-enquiry')  # settings: general_enquiry.hide_on = all
     if slug == '':
         page = page.replace(ENTRY_END, localize(data['grid']) + ENTRY_END, 1)
+        # Same as VY_Frontend::insert_stories(): after the first section.
+        page = page.replace('<!-- .et_pb_section -->', '<!-- .et_pb_section --><div class="vy-stories" data-vy-stories></div>', 1)
     elif slug in CONTEXTS:
         ctx = CONTEXTS[slug]
         page = replace_cf7(page, localize(ctx['cta']))
@@ -279,6 +294,9 @@ for slug in NEW_SLUGS:
 shutil.copytree(os.path.join(REPO, 'assets'), os.path.join(OUT, 'plugin', 'assets'))
 # The theme's icon font: the live server doesn't allow cross-domain font use.
 shutil.copytree(os.path.join(REPO, 'tools', 'static-assets'), os.path.join(OUT, 'plugin', 'static-assets'))
+# Package catalogue for the Holiday Finder / wishlist (same data the plugin serves at /packages).
+catalog = [dict(p, url=p['url'].replace('BASE/', BASE)) for p in data.get('catalog', [])]
+json.dump({'packages': catalog}, open(os.path.join(OUT, 'plugin', 'packages.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 open(os.path.join(OUT, '.nojekyll'), 'w').close()
 open(os.path.join(OUT, '404.html'), 'w').write('<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=' + BASE + '"><a href="' + BASE + '">Home</a>')
 print('built', len(pages), 'live pages +', len(NEW_SLUGS), 'new pages:', NEW_SLUGS)

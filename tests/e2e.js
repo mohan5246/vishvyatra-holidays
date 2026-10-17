@@ -11,7 +11,9 @@ const future = (d) => { const t = new Date(Date.now() + d * 864e5); return t.toI
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  // Missing files are errors, except uploaded photos (a local test site has none of the client's uploads).
+  page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('response', r => { if (r.status() >= 400 && !/\/wp-content\/uploads\//.test(r.url()) && !/favicon/.test(r.url())) errors.push(r.status() + ' ' + r.url()); });
 
   // 1. Homepage popup
   await page.goto(BASE + '/');
@@ -118,12 +120,12 @@ const future = (d) => { const t = new Date(Date.now() + d * 864e5); return t.toI
   await page.goto(BASE + '/');
   await page.locator('.vy-chat-launcher').click();
   ok((await page.locator('.vy-msg--bot').first().innerText()).includes('Welcome to VishvYatra Holidays! How can we help you today?'), 'chatbot greeting');
-  ok(await page.locator('.vy-chat__option').count() === 9, 'chatbot shows 8 services + contact');
+  ok(await page.locator('.vy-chat__option').count() === 10, 'chatbot shows Holiday Finder + 8 services + contact');
   await page.locator('.vy-chat__option:has-text("Hotel Booking")').click();
   ok(await page.locator('.vy-chat__option:has-text("Request a Quote")').count() === 1, 'service state offers Request a Quote');
   await page.screenshot({ path: OUT + '/chatbot-desktop.png' });
   await page.locator('[data-chat="back"]').click();
-  ok(await page.locator('.vy-chat__option').count() === 9, 'Back returns to main menu');
+  ok(await page.locator('.vy-chat__option').count() === 10, 'Back returns to main menu');
   await page.fill('#vy-chat-text', 'what is the price of goa trip?');
   await page.press('#vy-chat-text', 'Enter');
   ok((await page.locator('.vy-msg--bot').last().innerText()).includes('I can only help with the options below'), 'free text gets polite fallback');

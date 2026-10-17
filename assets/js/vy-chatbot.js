@@ -18,6 +18,7 @@
 			var label = key === 'other' ? (B.other || 'Other Enquiries') : cfg.services[key].label;
 			return { label: label, action: { goto: 'service:' + key } };
 		});
+		if (cfg.engage && cfg.engage.finder && cfg.engage.finder.enabled) opts.unshift({ label: '✨ Find my perfect holiday', action: { finder: true }, primary: true });
 		opts.push({ label: B.contact || 'Contact Details', action: { goto: 'contact' } });
 		return { messages: [bot.greeting], options: opts };
 	}
@@ -202,6 +203,7 @@
 		if (!opt) return;
 		var a = opt.action;
 		if (a.goto) return go(a.goto, opt.label);
+		if (a.finder) { close(); if (VY.openFinder) VY.openFinder(); return; }
 		addMessage('user', opt.label);
 		if (a.explore || a.quote) {
 			var key = a.explore || a.quote;

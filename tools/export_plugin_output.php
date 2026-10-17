@@ -22,8 +22,13 @@ foreach ( VY_Config::services() as $key => $service ) {
 // written by `build_static_demo.py extract` (slug, type, title, categories, text).
 $pages_file = getenv( 'VY_PAGES' );
 if ( $pages_file && is_readable( $pages_file ) ) {
-	$out['pages'] = array();
+	$out['pages']   = array();
+	$out['catalog'] = array();
 	foreach ( json_decode( file_get_contents( $pages_file ), true ) as $page ) { // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$entry = VY_Catalog::entry( $page );
+		if ( $entry ) {
+			$out['catalog'][] = $entry;
+		}
 		$context = VY_Context::resolve( $page );
 		if ( ! $context ) {
 			continue;

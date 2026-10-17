@@ -179,7 +179,7 @@ class VY_Enquiry_Service {
 		// The package / page the visitor enquired from (informational).
 		if ( ! empty( $meta['context']['title'] ) ) {
 			$payload['context'] = array(
-				'kind'    => isset( $meta['context']['kind'] ) && 'package' === $meta['context']['kind'] ? 'package' : 'page',
+				'kind'    => isset( $meta['context']['kind'] ) && in_array( $meta['context']['kind'], array( 'package', 'wishlist' ), true ) ? $meta['context']['kind'] : 'page',
 				'title'   => mb_substr( sanitize_text_field( (string) $meta['context']['title'] ), 0, 200 ),
 				'details' => isset( $meta['context']['details'] ) ? mb_substr( sanitize_text_field( (string) $meta['context']['details'] ), 0, 100 ) : '',
 			);
@@ -205,7 +205,8 @@ class VY_Enquiry_Service {
 		$lines[] = 'Reference: ' . $payload['reference'];
 		$lines[] = 'Service: ' . $payload['service']['label'] . ( 'special_price' === $payload['request_type'] ? ' (special price request)' : '' );
 		if ( ! empty( $payload['context'] ) ) {
-			$lines[] = ( 'package' === $payload['context']['kind'] ? 'Package: ' : 'Enquired from page: ' ) . $payload['context']['title']
+			$labels  = array( 'package' => 'Package: ', 'wishlist' => 'Saved trips: ', 'page' => 'Enquired from page: ' );
+			$lines[] = $labels[ $payload['context']['kind'] ] . $payload['context']['title']
 				. ( $payload['context']['details'] ? ' (' . $payload['context']['details'] . ')' : '' );
 		}
 		if ( ! empty( $payload['reward'] ) ) {

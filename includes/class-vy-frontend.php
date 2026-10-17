@@ -87,7 +87,7 @@ class VY_Frontend {
 
 		wp_enqueue_script( 'vy-core', VY_URL . 'assets/js/vy-core.js', array(), VY_VERSION, true );
 		wp_add_inline_script( 'vy-core', 'window.VY_CONFIG = ' . wp_json_encode( self::public_config() ) . ';', 'before' );
-		foreach ( array( 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar', 'vy-quiz' ) as $handle ) {
+		foreach ( array( 'vy-xlsx', 'vy-forms', 'vy-popup', 'vy-chatbot', 'vy-quotebar', 'vy-quiz', 'vy-engage' ) as $handle ) {
 			wp_enqueue_script( $handle, VY_URL . 'assets/js/' . $handle . '.js', array( 'vy-core' ), VY_VERSION, true );
 		}
 	}
@@ -129,6 +129,7 @@ class VY_Frontend {
 			'popup'        => VY_Config::setting( 'popup' ),
 			'quoteBar'     => VY_Config::setting( 'quote_bar' ),
 			'quiz'         => VY_Quiz::public_config(),
+			'engage'       => self::engage_config(),
 			'chatbotEnabled' => (bool) VY_Config::setting( 'chatbot', 'enabled', true ),
 			'services'     => $services,
 			'forms'        => $forms,
@@ -140,6 +141,26 @@ class VY_Frontend {
 				'checklist'  => $visa['checklist'],
 			),
 			'chatbot'      => $chat,
+		);
+	}
+
+	/** Holiday Finder, wishlist, itinerary and stories settings for the browser. */
+	public static function engage_config() {
+		$engage  = VY_Config::get( 'engage' );
+		$uploads = wp_get_upload_dir();
+		$stories = $engage['stories'];
+		foreach ( $stories['items'] as &$story ) {
+			$story['link'] = home_url( '/' . $story['link'] . '/' );
+		}
+		unset( $story );
+		return array(
+			'catalogUrl' => esc_url_raw( rest_url( VY_Enquiry_Service::ROUTE_NS . '/packages' ) ),
+			'imageBase'  => trailingslashit( $uploads['baseurl'] ),
+			'themes'     => VY_Catalog::themes(),
+			'finder'     => $engage['finder'],
+			'wishlist'   => $engage['wishlist'],
+			'itinerary'  => $engage['itinerary'],
+			'stories'    => $stories,
 		);
 	}
 
@@ -171,7 +192,19 @@ class VY_Frontend {
 			return $content;
 		}
 		$done = true;
+		$content = self::insert_stories( $content );
 		return $content . self::shortcode_service_grid( array() );
+	}
+
+	/** Destination stories row, placed after the homepage's first section (the banner). */
+	public static function insert_stories( $content ) {
+		if ( empty( VY_Config::get( 'engage' )['stories']['enabled'] ) ) {
+			return $content;
+		}
+		$mount  = '<div class="vy-stories" data-vy-stories></div>';
+		$marker = '<!-- .et_pb_section -->';
+		$pos    = strpos( $content, $marker );
+		return false === $pos ? $mount . $content : substr( $content, 0, $pos + strlen( $marker ) ) . $mount . substr( $content, $pos + strlen( $marker ) );
 	}
 
 	public static function shortcode_service_grid( $atts ) {
@@ -199,6 +232,12 @@ class VY_Frontend {
 						</li>
 					<?php endforeach; ?>
 				</ul>
+				<?php if ( ! empty( VY_Config::get( 'engage' )['finder']['enabled'] ) ) : ?>
+					<div class="vy-finder-cta">
+						<p><span aria-hidden="true">✨</span> <strong>Not sure where to go?</strong> Answer 4 quick questions and we'll match you with real packages.</p>
+						<button type="button" class="vy-btn" data-vy-open-finder><?php esc_html_e( 'Find my perfect holiday', 'vishvyatra' ); ?></button>
+					</div>
+				<?php endif; ?>
 			</div>
 		</section>
 		<?php
