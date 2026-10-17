@@ -70,6 +70,19 @@
 		// Values worked out from the page (e.g. a package's destination and days).
 		this.prefill = parseJSON(mount.getAttribute('data-vy-prefill')) || {};
 		this.context = parseJSON(mount.getAttribute('data-vy-context'));
+		// Holiday Finder "Who's coming?" -> traveller counts (only if not set by the page).
+		var who = this.service.form === 'tour' && VY.finderTravellers ? VY.finderTravellers() : null;
+		if (who) {
+			for (var k in who) if (this.prefill[k] == null) this.prefill[k] = who[k];
+		}
+		// "Send all in one enquiry" from My Trips.
+		var wish = this.serviceKey === 'other' ? parseJSON(VY.storage.get('vy_wishlist_enquiry')) : null;
+		if (wish && wish.length) {
+			this.fromWishlist = true;
+			this.context = { kind: 'wishlist', title: wish.map(function (w) { return w.title; }).join('; ').slice(0, 190), details: wish.length + ' saved packages' };
+			this.prefill.category = this.prefill.category || 'General enquiry';
+			this.prefill.description = 'I am interested in these packages:\n' + wish.map(function (w) { return '- ' + w.title + (w.duration ? ' (' + w.duration + ')' : ''); }).join('\n') + '\n\nPlease send me quotes / help me choose.';
+		}
 		this.touched = {};
 		this.busy = false;
 		this.render();
@@ -88,7 +101,7 @@
 			html += '<p class="vy-form__type">Tour type: <strong>' + (this.service.tour_type === 'international' ? 'International' : 'Domestic') + '</strong></p>';
 		}
 		if (this.context && this.context.title) {
-			html += '<p class="vy-form__context">' + (this.context.kind === 'package' ? 'Package' : 'Enquiring from') + ': <strong>' + VY.esc(this.context.title) + '</strong>' +
+			html += '<p class="vy-form__context">' + (this.context.kind === 'package' ? 'Package' : (this.context.kind === 'wishlist' ? 'Saved trips' : 'Enquiring from')) + ': <strong>' + VY.esc(this.context.title) + '</strong>' +
 				(this.context.details ? ' <span>· ' + VY.esc(this.context.details) + '</span>' : '') + '</p>';
 		}
 		html += this.rewardHtml();
@@ -148,7 +161,7 @@
 			return '<fieldset class="vy-field' + width + '" data-field="' + f.name + '" aria-describedby="' + describedBy + '"><legend class="vy-label">' + VY.esc(f.label) + star + '</legend>' +
 				'<div class="vy-choices">' + radios + '</div>' + help + '<p class="vy-error" id="' + id + '-err"></p></fieldset>' + other;
 		} else if (f.type === 'textarea') {
-			control = '<textarea' + common + ' rows="4"' + (f.maxlength ? ' maxlength="' + f.maxlength + '"' : '') + '></textarea>';
+			control = '<textarea' + common + ' rows="4"' + (f.maxlength ? ' maxlength="' + f.maxlength + '"' : '') + '>' + VY.esc(def) + '</textarea>';
 		} else {
 			var attrs = '';
 			if (f.type === 'number') {
@@ -445,6 +458,7 @@
 
 	EnquiryForm.prototype.success = function (data) {
 		var self = this;
+		if (this.fromWishlist) VY.storage.set('vy_wishlist_enquiry', '');
 		var prepared = data.status !== 'recorded';
 		this.body.innerHTML =
 			'<div class="vy-confirm' + (prepared ? ' vy-confirm--pending' : '') + '" role="status" tabindex="-1">' +
