@@ -51,6 +51,22 @@
 		});
 	};
 
+	// Per-browser storage that survives closing the tab (quiz state / reward).
+	VY.local = {
+		get: function (key) {
+			try { return JSON.parse(window.localStorage.getItem(key)); } catch (e) { return null; }
+		},
+		set: function (key, value) {
+			try { window.localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage blocked: ignore */ }
+		}
+	};
+
+	/** The travel-quiz reward this visitor won, or null. */
+	VY.quizReward = function () {
+		var s = VY.local.get('vy_quiz');
+		return s && s.status === 'won' && s.code ? s : null;
+	};
+
 	VY.storage = {
 		get: function (key) {
 			try { return window.sessionStorage.getItem(key); } catch (e) { return null; }

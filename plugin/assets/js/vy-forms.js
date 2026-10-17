@@ -91,6 +91,7 @@
 			html += '<p class="vy-form__context">' + (this.context.kind === 'package' ? 'Package' : 'Enquiring from') + ': <strong>' + VY.esc(this.context.title) + '</strong>' +
 				(this.context.details ? ' <span>· ' + VY.esc(this.context.details) + '</span>' : '') + '</p>';
 		}
+		html += this.rewardHtml();
 		html += '<p class="vy-form__legend"><span class="vy-req" aria-hidden="true">*</span> Required fields</p>';
 		html += '<div class="vy-form__grid">';
 		this.schema.fields.forEach(function (f) { html += self.fieldHtml(f); });
@@ -104,6 +105,13 @@
 		this.summary = this.body.querySelector('.vy-form__summary');
 		this.bind();
 		this.applyVisibility();
+	};
+
+	EnquiryForm.prototype.rewardHtml = function () {
+		var r = VY.quizReward();
+		if (!r) return '';
+		return '<p class="vy-form__reward"><span aria-hidden="true">🎁</span> Quiz reward applied: <strong>' + VY.esc(r.label || (r.percent + '% off your quotation')) +
+			'</strong> · code <code>' + VY.esc(r.code) + '</code></p>';
 	};
 
 	EnquiryForm.prototype.fieldHtml = function (f) {
@@ -399,6 +407,7 @@
 			source_page: window.location.href.split('#')[0],
 			idempotency_key: this.idempotencyKey,
 			context: this.context || undefined,
+			reward_code: VY.quizReward() ? VY.quizReward().code : undefined,
 			website: this.form.elements.website.value
 		};
 
@@ -529,5 +538,14 @@
 		});
 
 		if (window.location.hash === '#vy-enquiry') setTimeout(VY.focusEnquiry, 300);
+
+		// Show the reward on forms already on the page as soon as it is won.
+		document.addEventListener('vy:quiz-won', function () {
+			VY.forms.forEach(function (f) {
+				if (f.form && !f.form.querySelector('.vy-form__reward')) {
+					f.form.querySelector('.vy-form__legend').insertAdjacentHTML('beforebegin', f.rewardHtml());
+				}
+			});
+		});
 	});
 })();
