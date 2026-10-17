@@ -85,6 +85,7 @@
 		document.documentElement.classList.remove('vy-scroll-lock');
 		VY.storage.set(KEY, '1');
 		if (lastFocus && lastFocus.focus && document.contains(lastFocus)) lastFocus.focus();
+		document.dispatchEvent(new CustomEvent('vy:popup-close'));
 	}
 
 	VY.openServicePopup = open;

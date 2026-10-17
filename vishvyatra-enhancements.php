@@ -27,6 +27,7 @@ require_once VY_DIR . 'includes/adapters/class-vy-local-adapter.php';
 require_once VY_DIR . 'includes/adapters/class-vy-mock-adapter.php';
 require_once VY_DIR . 'includes/adapters/class-vy-whatsapp-adapter.php';
 require_once VY_DIR . 'includes/class-vy-enquiry-service.php';
+require_once VY_DIR . 'includes/class-vy-quiz.php';
 require_once VY_DIR . 'includes/class-vy-pages.php';
 require_once VY_DIR . 'includes/class-vy-payments.php';
 require_once VY_DIR . 'includes/class-vy-frontend.php';
@@ -38,6 +39,7 @@ add_action(
 	'plugins_loaded',
 	static function () {
 		VY_Enquiry_Service::init();
+		VY_Quiz::init();
 		VY_Pages::init();
 		VY_Payments::init();
 		VY_Frontend::init();

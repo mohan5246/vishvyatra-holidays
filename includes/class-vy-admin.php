@@ -58,6 +58,7 @@ class VY_Admin {
 			'Reference' => $payload['reference'],
 			'Service'   => $payload['service']['label'] . ( 'special_price' === $payload['request_type'] ? ' (special price request)' : '' ),
 			'Package / page' => ! empty( $payload['context'] ) ? $payload['context']['title'] . ( $payload['context']['details'] ? ' (' . $payload['context']['details'] . ')' : '' ) : '',
+			'Quiz reward'    => ! empty( $payload['reward'] ) ? $payload['reward']['percent'] . '% off - ' . $payload['reward']['code'] . ( $payload['reward']['verified'] ? ' (verified)' : ' (NOT verified)' ) : '',
 			'Name'      => $payload['customer']['name'],
 			'Mobile'    => $payload['customer']['mobile'],
 			'Email'     => $payload['customer']['email'],

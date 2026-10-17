@@ -88,6 +88,7 @@ class VY_Enquiry_Service {
 				'request_type' => isset( $params['request_type'] ) ? sanitize_key( $params['request_type'] ) : 'quote',
 				'source_page'  => isset( $params['source_page'] ) ? esc_url_raw( $params['source_page'] ) : '',
 				'context'      => isset( $params['context'] ) && is_array( $params['context'] ) ? $params['context'] : array(),
+				'reward_code'  => isset( $params['reward_code'] ) ? (string) $params['reward_code'] : '',
 			)
 		);
 
@@ -169,6 +170,12 @@ class VY_Enquiry_Service {
 			$payload['service']['tour_type'] = $service['tour_type'];
 		}
 
+		// Travel-quiz reward the visitor won, if any (checked against issued codes).
+		$reward = ! empty( $meta['reward_code'] ) ? VY_Quiz::reward_for( $meta['reward_code'] ) : null;
+		if ( $reward ) {
+			$payload['reward'] = $reward;
+		}
+
 		// The package / page the visitor enquired from (informational).
 		if ( ! empty( $meta['context']['title'] ) ) {
 			$payload['context'] = array(
@@ -200,6 +207,9 @@ class VY_Enquiry_Service {
 		if ( ! empty( $payload['context'] ) ) {
 			$lines[] = ( 'package' === $payload['context']['kind'] ? 'Package: ' : 'Enquired from page: ' ) . $payload['context']['title']
 				. ( $payload['context']['details'] ? ' (' . $payload['context']['details'] . ')' : '' );
+		}
+		if ( ! empty( $payload['reward'] ) ) {
+			$lines[] = sprintf( 'Quiz reward: %d%% off quotation, code %s (%s)', $payload['reward']['percent'], $payload['reward']['code'], $payload['reward']['verified'] ? 'verified' : 'NOT VERIFIED - check before applying' );
 		}
 		$lines[] = 'Name: ' . $payload['customer']['name'];
 		$lines[] = 'Mobile: ' . $payload['customer']['mobile'];
