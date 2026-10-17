@@ -120,12 +120,12 @@ const future = (d) => { const t = new Date(Date.now() + d * 864e5); return t.toI
   await page.goto(BASE + '/');
   await page.locator('.vy-chat-launcher').click();
   ok((await page.locator('.vy-msg--bot').first().innerText()).includes('Welcome to VishvYatra Holidays! How can we help you today?'), 'chatbot greeting');
-  ok(await page.locator('.vy-chat__option').count() === 10, 'chatbot shows Holiday Finder + 8 services + contact');
+  ok(await page.locator('.vy-chat__option').count() === 11, 'chatbot shows Holiday Finder + Travel Quiz + 8 services + contact');
   await page.locator('.vy-chat__option:has-text("Hotel Booking")').click();
   ok(await page.locator('.vy-chat__option:has-text("Request a Quote")').count() === 1, 'service state offers Request a Quote');
   await page.screenshot({ path: OUT + '/chatbot-desktop.png' });
   await page.locator('[data-chat="back"]').click();
-  ok(await page.locator('.vy-chat__option').count() === 10, 'Back returns to main menu');
+  ok(await page.locator('.vy-chat__option').count() === 11, 'Back returns to main menu');
   await page.fill('#vy-chat-text', 'what is the price of goa trip?');
   await page.press('#vy-chat-text', 'Enter');
   ok((await page.locator('.vy-msg--bot').last().innerText()).includes('I can only help with the options below'), 'free text gets polite fallback');

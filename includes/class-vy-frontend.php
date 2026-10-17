@@ -25,6 +25,14 @@ class VY_Frontend {
 		add_shortcode( 'vy_service_page', array( __CLASS__, 'shortcode_service_page' ) );
 		add_shortcode( 'vy_enquiry_form', array( __CLASS__, 'shortcode_enquiry_form' ) );
 		add_shortcode( 'vy_service_grid', array( __CLASS__, 'shortcode_service_grid' ) );
+		// [vy_travel_quiz label="Play the Travel Quiz"] - a button editors can place anywhere.
+		add_shortcode(
+			'vy_travel_quiz',
+			static function ( $atts ) {
+				$atts = shortcode_atts( array( 'label' => 'Play the Travel Quiz' ), $atts, 'vy_travel_quiz' );
+				return '<button type="button" class="vy-btn" data-vy-open-quiz>🧠 ' . esc_html( $atts['label'] ) . '</button>';
+			}
+		);
 
 		if ( VY_Config::setting( 'contact_form_7', 'replace', true ) ) {
 			add_filter( 'widget_display_callback', array( __CLASS__, 'replace_cf7_widget' ), 10, 3 );
@@ -236,6 +244,12 @@ class VY_Frontend {
 					<div class="vy-finder-cta">
 						<p><span aria-hidden="true">✨</span> <strong>Not sure where to go?</strong> Answer 4 quick questions and we'll match you with real packages.</p>
 						<button type="button" class="vy-btn" data-vy-open-finder><?php esc_html_e( 'Find my perfect holiday', 'vishvyatra' ); ?></button>
+					</div>
+				<?php endif; ?>
+				<?php if ( ! empty( VY_Config::get( 'quiz' )['enabled'] ) ) : ?>
+					<div class="vy-finder-cta vy-quiz-cta">
+						<p><span aria-hidden="true">🧠</span> <strong>Travel Quiz:</strong> guess 5 famous places from photos. Play as often as you like!</p>
+						<button type="button" class="vy-btn" data-vy-open-quiz><?php esc_html_e( 'Play the Travel Quiz', 'vishvyatra' ); ?></button>
 					</div>
 				<?php endif; ?>
 			</div>

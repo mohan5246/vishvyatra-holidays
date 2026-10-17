@@ -561,3 +561,11 @@ html body .vy-story { flex: 0 0 auto; display: flex; flex-direction: column; ali
 }
 /* The theme colours every <p>; story text must stay white on photos. */
 html body .vy-sv__caption, html body .vy-sv__label, html body .vy-sv__cta-title { color: #fff !important; text-shadow: 0 2px 8px rgba(0, 0, 0, .55); }
+
+/* Quiz: always playable */
+html body .vy-quiz-pill--play { background: linear-gradient(100deg, var(--vy-navy), #27507f) !important; color: #fff !important; box-shadow: 0 8px 22px rgba(0, 19, 70, .35); }
+.vy-quiz__mode { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--vy-bg-soft); color: var(--vy-navy); font-size: 11px; letter-spacing: .03em; vertical-align: middle; }
+.vy-quiz__mode--prize { background: #fff3cd; color: #8a5a00; }
+.vy-quiz__board { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 4px 0 14px; padding: 10px; border-radius: 12px; background: var(--vy-bg-soft); font-size: 13px; font-weight: 700; color: var(--vy-navy); }
+.vy-quiz__again { width: 100%; margin-top: 10px; }
+.vy-quiz-cta { margin-top: 12px; background: linear-gradient(100deg, #8a5a00, #c77c02); }

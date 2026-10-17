@@ -42,6 +42,7 @@ class VY_Quiz {
 			'imageBase'       => trailingslashit( $uploads['baseurl'] ),
 			'questions'       => (int) $quiz['questions'],
 			'requiredCorrect' => (int) $quiz['required_correct'],
+			'rewardAttempts'  => isset( $quiz['reward_attempts'] ) ? (int) $quiz['reward_attempts'] : 1,
 			'rewardPercent'   => (int) $quiz['reward_percent'],
 			'rewardLabel'     => $quiz['reward_label'],
 			'inviteDelay'     => (int) $quiz['invite_delay_ms'],
