@@ -1,8 +1,9 @@
 /**
- * Travel quiz: 5 easy picture questions; get them all right to win a reward
- * on the quotation. One quiz per visitor (kept in localStorage). An invite
- * slides in after landing, and a small "Win 10% off" button stays on every
- * page until the visitor plays.
+ * Travel quiz: 5 easy picture questions. Playable any time from any page
+ * (floating quiz button, chatbot, homepage, [data-vy-open-quiz] links).
+ * The quotation reward can be won in the first `rewardAttempts` rounds per
+ * visitor; after that (or after winning) rounds are "practice" for fun.
+ * Rounds prefer questions the visitor has not seen yet.
  */
 (function () {
 	'use strict';
@@ -13,6 +14,8 @@
 	var STATE = 'vy_quiz';            // { status: won|lost, code, percent, label, score }
 	var PROGRESS = 'vy_quiz_progress'; // an unfinished quiz, so reopening resumes it
 	var INVITED = 'vy_quiz_invited';   // invite already shown this visit
+	var STATS = 'vy_quiz_stats';       // { plays, best, correct }
+	var SEEN = 'vy_quiz_seen';         // question ids already asked
 
 	if (!Q.enabled || !Q.pool || !Q.pool.length) return;
 
@@ -32,13 +35,31 @@
 		return null;
 	}
 	function state() { return VY.local.get(STATE); }
+	function stats() { return VY.local.get(STATS) || { plays: 0, best: 0, correct: 0 }; }
+	/** Can the next round still earn the reward? */
+	function eligible() {
+		var s = state();
+		if (!s) return true;
+		if (s.status === 'won') return false;
+		return (s.attempts || 1) < (Q.rewardAttempts || 1);
+	}
+	function useAttempt(score, total) {
+		var s = state() || {};
+		VY.local.set(STATE, { status: 'lost', attempts: (s.attempts || 0) + 1, score: score, total: total });
+	}
 	function reduceMotion() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 	function img(q) { return Q.imageBase + q.image; }
 	function rewardText() { return Q.rewardLabel || (Q.rewardPercent + '% off your quotation'); }
 
 	function newProgress() {
-		var picked = shuffle(Q.pool).slice(0, Math.min(Q.questions, Q.pool.length));
+		var n = Math.min(Q.questions, Q.pool.length);
+		var seen = VY.local.get(SEEN) || [];
+		var fresh = Q.pool.filter(function (q) { return seen.indexOf(q.id) === -1; });
+		if (fresh.length < n) { seen = []; fresh = Q.pool.slice(); } // everything seen: start over
+		var picked = shuffle(fresh).slice(0, n);
+		VY.local.set(SEEN, seen.concat(picked.map(function (q) { return q.id; })));
 		return {
+			eligible: eligible(),
 			items: picked.map(function (q) {
 				return { id: q.id, order: shuffle(q.options.map(function (_, i) { return i; })) };
 			}),
@@ -56,19 +77,18 @@
 			pill.className = 'vy-quiz-pill';
 			pill.addEventListener('click', function () {
 				hideInvite();
-				var st = state();
-				if (st && st.status === 'won') openModal('reward');
-				else openModal('quiz');
+				VY.openQuiz();
 			});
 			document.body.appendChild(pill);
 		}
-		if (s && s.status === 'lost') { pill.hidden = true; return; }
 		pill.hidden = false;
-		pill.innerHTML = '<span class="vy-quiz-pill__gift" aria-hidden="true">🎁</span>' +
-			(s && s.status === 'won'
-				? '<span>Your ' + VY.esc(Q.rewardPercent + '% reward') + '</span>'
-				: '<span>Win ' + VY.esc(Q.rewardPercent + '% off') + '</span>');
-		pill.setAttribute('aria-label', s && s.status === 'won' ? 'Show my travel quiz reward' : 'Play the travel quiz to win ' + rewardText());
+		var won = s && s.status === 'won';
+		var canWin = eligible();
+		pill.classList.toggle('vy-quiz-pill--play', !won && !canWin);
+		pill.innerHTML = '<span class="vy-quiz-pill__gift" aria-hidden="true">' + (won || canWin ? '🎁' : '🧠') + '</span>' +
+			(won ? '<span>Your ' + VY.esc(Q.rewardPercent + '% reward') + '</span>'
+				: canWin ? '<span>Win ' + VY.esc(Q.rewardPercent + '% off') + '</span>' : '<span>Travel Quiz</span>');
+		pill.setAttribute('aria-label', won ? 'Show my travel quiz reward and play again' : canWin ? 'Play the travel quiz to win ' + rewardText() : 'Play the travel quiz');
 	}
 
 	// ---------- invite ----------
@@ -161,7 +181,8 @@
 		}).join('');
 
 		body().innerHTML =
-			'<p class="vy-quiz__kicker" id="vy-quiz-title">Travel Quiz · Question ' + (p.index + 1) + ' of ' + total + '</p>' +
+			'<p class="vy-quiz__kicker" id="vy-quiz-title">Travel Quiz · Question ' + (p.index + 1) + ' of ' + total +
+			(p.eligible ? ' <span class="vy-quiz__mode vy-quiz__mode--prize">🎁 Reward round</span>' : ' <span class="vy-quiz__mode">Practice round</span>') + '</p>' +
 			'<div class="vy-quiz__dots" aria-hidden="true">' + dots + '</div>' +
 			'<figure class="vy-quiz__figure"><img src="' + VY.esc(img(q)) + '" alt="' + VY.esc(q.alt) + '"></figure>' +
 			'<p class="vy-quiz__question">' + VY.esc(q.question) + '</p>' +
@@ -183,9 +204,9 @@
 		p.answers[p.index] = { id: q.id, choice: choice, ok: ok };
 		p.index++;
 		VY.local.set(PROGRESS, p);
-		// A wrong answer uses up this visitor's chance at the reward.
+		// In a reward round, the first wrong answer uses up that attempt.
 		var correct = p.answers.filter(function (a) { return a && a.ok; }).length;
-		if (!ok) VY.local.set(STATE, { status: 'lost', score: correct, total: p.items.length });
+		if (!ok && p.eligible && !p.counted) { p.counted = true; VY.local.set(PROGRESS, p); useAttempt(correct, p.items.length); }
 
 		Array.prototype.forEach.call(body().querySelectorAll('.vy-quiz__opt'), function (b) {
 			var c = Number(b.getAttribute('data-choice'));
@@ -209,10 +230,16 @@
 	function finish(p) {
 		var correct = p.answers.filter(function (a) { return a && a.ok; }).length;
 		var total = p.items.length;
-		if (correct < Q.requiredCorrect) {
-			VY.local.set(STATE, { status: 'lost', score: correct, total: total });
+		if (!p.recorded) {
+			p.recorded = true;
+			var st = stats();
+			VY.local.set(STATS, { plays: st.plays + 1, best: Math.max(st.best, correct), correct: st.correct + correct });
+			VY.local.set(PROGRESS, p);
+		}
+		if (!p.eligible || correct < Q.requiredCorrect) {
+			if (p.eligible && !p.counted) useAttempt(correct, total);
 			VY.local.set(PROGRESS, null);
-			return renderLost(correct, total);
+			return renderResult(correct, total, p.eligible);
 		}
 		body().innerHTML = '<p class="vy-quiz__kicker" id="vy-quiz-title">All ' + total + ' correct!</p><p class="vy-quiz__question">Unlocking your reward…</p>';
 		claim(p.answers).then(function (code) {
@@ -258,6 +285,8 @@
 			'<button type="button" class="vy-btn vy-btn--outline" data-copy>Copy</button></div>' +
 			'<p class="vy-quiz__hint">It is added to your enquiry automatically - just request a quote on any page.</p>' +
 			'<button type="button" class="vy-btn vy-btn--lg" data-use>' + (hasForm ? 'Use it - get my quote' : 'Choose a service') + ' →</button>' +
+			'<button type="button" class="vy-btn vy-btn--ghost vy-quiz__again" data-again>🧠 Play again just for fun</button>' +
+			scoreboard() +
 			'<p class="vy-quiz__terms">' + VY.esc(Q.terms || '') + '</p></div>';
 		body().querySelector('[data-copy]').addEventListener('click', function (e) {
 			var btn = e.currentTarget;
@@ -269,23 +298,45 @@
 			if (hasForm) VY.focusEnquiry();
 			else if (VY.openServicePopup) VY.openServicePopup();
 		});
+		body().querySelector('[data-again]').addEventListener('click', playAgain);
 		focusIn('[data-use]');
 		if (celebrate && !reduceMotion()) confetti();
 	}
 
-	function renderLost(correct, total) {
+	function scoreboard() {
+		var st = stats();
+		if (!st.plays) return '';
+		return '<p class="vy-quiz__board"><span>🎮 ' + st.plays + ' game' + (st.plays > 1 ? 's' : '') + '</span><span>🏆 Best ' + st.best + '/' + Math.min(Q.questions, Q.pool.length) +
+			'</span><span>✅ ' + st.correct + ' right answers</span></p>';
+	}
+
+	function playAgain() {
+		VY.local.set(PROGRESS, null);
+		renderQuestion();
+	}
+
+	function renderResult(correct, total, wasRewardRound) {
 		var hasForm = !!document.getElementById('vy-enquiry');
+		var s = state();
+		var cheer = correct === total ? 'Perfect score! 🌟' : correct >= total - 1 ? 'So close, globetrotter! ✈️' : correct >= 3 ? 'Nice going, traveller! 🌍' : 'Every trip starts somewhere! 🧭';
+		var note = wasRewardRound
+			? 'The reward needs all ' + total + ' right - but our team still finds you the best price on every trip. Keep playing for fun!'
+			: (s && s.status === 'won' ? 'Your ' + VY.esc(rewardText()) + ' is safe - code <code>' + VY.esc(s.code) + '</code>.' : 'Practice rounds are just for fun. Can you beat your best score?');
 		body().innerHTML =
-			'<p class="vy-quiz__kicker" id="vy-quiz-title">You got ' + correct + ' out of ' + total + '</p>' +
-			'<p class="vy-quiz__question">Great try, traveller! 🌍</p>' +
-			'<p class="vy-quiz__hint">The reward needs all ' + total + ' right, but our team still finds you the best price on every trip.</p>' +
-			'<button type="button" class="vy-btn vy-btn--lg" data-use>' + (hasForm ? 'Get my quote' : 'Choose a service') + ' →</button>';
+			'<p class="vy-quiz__kicker" id="vy-quiz-title">' + (wasRewardRound ? 'Reward round' : 'Practice round') + ' · You got ' + correct + ' out of ' + total + '</p>' +
+			'<p class="vy-quiz__question">' + cheer + '</p>' +
+			'<p class="vy-quiz__hint">' + note + '</p>' +
+			scoreboard() +
+			'<button type="button" class="vy-btn vy-btn--lg" data-again>🧠 Play again</button>' +
+			'<button type="button" class="vy-btn vy-btn--ghost vy-quiz__again" data-use>' + (hasForm ? 'Get my quote' : 'Choose a service') + ' →</button>';
+		body().querySelector('[data-again]').addEventListener('click', playAgain);
 		body().querySelector('[data-use]').addEventListener('click', function () {
 			closeModal();
 			if (hasForm) VY.focusEnquiry();
 			else if (VY.openServicePopup) VY.openServicePopup();
 		});
-		focusIn('[data-use]');
+		focusIn('[data-again]');
+		if (correct === total && !reduceMotion()) confetti();
 	}
 
 	// ---------- confetti (no library) ----------
@@ -333,7 +384,10 @@
 	}
 
 	// ---------- boot ----------
-	VY.openQuiz = function () { openModal(state() && state().status === 'won' ? 'reward' : 'quiz'); };
+	VY.openQuiz = function () { hideInvite(); openModal(state() && state().status === 'won' && !VY.local.get(PROGRESS) ? 'reward' : 'quiz'); };
+	document.addEventListener('click', function (e) {
+		if (e.target.closest('[data-vy-open-quiz]')) { e.preventDefault(); if (VY.closeServicePopup) VY.closeServicePopup(); VY.openQuiz(); }
+	});
 
 	VY.ready(function () {
 		renderPill();
